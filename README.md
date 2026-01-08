@@ -1,292 +1,266 @@
-# Full-Stack Notes Application
+# Notes Application - Full Stack Next.js with MongoDB
 
-A complete full-stack web application for managing notes with categories, built with NestJS backend and React frontend.
+A complete full-stack notes application built with Next.js 13, MongoDB, NextAuth.js, and Tailwind CSS.
 
 ## Features
 
-- **User Authentication**: Secure JWT-based authentication with login and registration
-- **Notes Management**: Create, read, update, and delete notes
-- **Categories**: Organize notes into color-coded categories
-- **Search**: Search notes by title and content
-- **Filter**: Filter notes by category
-- **Timestamps**: Automatic tracking of creation and update times
-- **Modern UI**: Beautiful, responsive design with Tailwind CSS
+- **User Authentication**: Secure login and registration system
+- **Create Notes**: Add new notes with title, content, and categories
+- **View Notes**: Display all your notes in an organized grid layout
+- **Edit Notes**: Update existing notes
+- **Delete Notes**: Remove unwanted notes
+- **Categories**: Organize notes with custom categories/groups
+- **Timestamps**: Automatic creation and update timestamps
+- **User-specific**: Each user only sees their own notes
+- **Responsive Design**: Beautiful UI that works on all devices
 
 ## Tech Stack
 
-### Backend
-- **NestJS**: Progressive Node.js framework
-- **MongoDB**: NoSQL database with Mongoose ODM
-- **JWT**: JSON Web Token authentication
-- **Passport**: Authentication middleware
-- **bcrypt**: Password hashing
+- **Frontend**: Next.js 13, React, Tailwind CSS
+- **Backend**: Next.js API Routes
+- **Database**: MongoDB with Mongoose ODM
+- **Authentication**: NextAuth.js
+- **Icons**: Lucide React
 
-### Frontend
-- **React**: UI library with TypeScript
-- **Vite**: Fast build tool
-- **Tailwind CSS**: Utility-first CSS framework
-- **Lucide React**: Icon library
+## Prerequisites
+
+- Node.js 18+ installed
+- MongoDB installed locally OR MongoDB Atlas account
+
+## Installation
+
+1. **Clone the repository** (or you already have the files)
+
+2. **Install dependencies**:
+```bash
+npm install
+```
+
+3. **Install additional required packages**:
+```bash
+npm install mongoose next-auth bcryptjs
+npm install --save-dev @types/bcryptjs
+```
+
+4. **Set up environment variables**:
+   - Copy `.env.example` to `.env.local`
+   - Update the values:
+
+```env
+MONGODB_URI=mongodb://localhost:27017/notes-app
+# For MongoDB Atlas, use: mongodb+srv://<username>:<password>@cluster.mongodb.net/notes-app
+
+NEXTAUTH_SECRET=generate-a-random-secret-here
+# Generate with: openssl rand -base64 32
+
+NEXTAUTH_URL=http://localhost:3000
+# In production, set to your domain
+```
+
+## Database Setup
+
+### Option 1: Local MongoDB
+
+1. Install MongoDB Community Edition from [mongodb.com](https://www.mongodb.com/try/download/community)
+2. Start MongoDB:
+   - **Windows**: MongoDB starts automatically as a service
+   - **Mac**: `brew services start mongodb-community`
+   - **Linux**: `sudo systemctl start mongod`
+3. The app will automatically create the database and collections
+
+### Option 2: MongoDB Atlas (Cloud)
+
+1. Create a free account at [MongoDB Atlas](https://www.mongodb.com/cloud/atlas)
+2. Create a new cluster
+3. Create a database user
+4. Whitelist your IP address (or use 0.0.0.0/0 for development)
+5. Get your connection string and update `MONGODB_URI` in `.env.local`
+
+## Running the Application
+
+1. **Development mode**:
+```bash
+npm run dev
+```
+
+2. Open [http://localhost:3000](http://localhost:3000)
+
+3. **Build for production**:
+```bash
+npm run build
+npm start
+```
 
 ## Project Structure
 
 ```
-project/
-├── backend/                 # NestJS backend
-│   ├── src/
-│   │   ├── auth/           # Authentication module
-│   │   ├── notes/          # Notes CRUD module
-│   │   ├── categories/     # Categories module
-│   │   ├── schemas/        # MongoDB schemas
-│   │   ├── app.module.ts
-│   │   └── main.ts
-│   ├── package.json
-│   └── tsconfig.json
-│
-└── src/                    # React frontend
-    ├── components/         # UI components
-    ├── contexts/          # React contexts
-    ├── App.tsx
-    └── main.tsx
+├── app/
+│   ├── api/
+│   │   ├── auth/[...nextauth]/     # NextAuth configuration
+│   │   ├── notes/                   # Notes CRUD endpoints
+│   │   └── register/                # User registration
+│   ├── dashboard/                   # Main notes dashboard
+│   ├── login/                       # Login page
+│   ├── register/                    # Registration page
+│   └── layout.tsx                   # Root layout
+├── components/
+│   ├── notes/
+│   │   ├── NoteCard.tsx            # Individual note card
+│   │   ├── NoteModal.tsx           # Create/Edit modal
+│   │   └── NotesList.tsx           # Notes grid layout
+│   └── auth/
+│       └── AuthProvider.tsx         # Session provider
+├── lib/
+│   ├── mongodb.ts                   # MongoDB connection
+│   └── models/
+│       ├── User.ts                  # User model
+│       └── Note.ts                  # Note model
+└── types/
+    └── note.ts                      # TypeScript types
 ```
 
 ## Database Schema
 
-### User
-- `email`: string (unique)
-- `password`: string (hashed)
-- `name`: string
-- `createdAt`: timestamp
-- `updatedAt`: timestamp
-
-### Note
-- `title`: string
-- `content`: string
-- `userId`: reference to User
-- `categoryId`: reference to Category (optional)
-- `createdAt`: timestamp
-- `updatedAt`: timestamp
-
-### Category
-- `name`: string
-- `color`: string (hex color)
-- `userId`: reference to User
-- `createdAt`: timestamp
-- `updatedAt`: timestamp
-
-## Installation & Setup
-
-### Prerequisites
-- Node.js (v18 or higher)
-- MongoDB (v6 or higher)
-- npm or yarn
-
-### 1. MongoDB Setup
-
-Make sure MongoDB is installed and running on your system.
-
-**For macOS (using Homebrew):**
-```bash
-brew tap mongodb/brew
-brew install mongodb-community
-brew services start mongodb-community
+### User Model
+```javascript
+{
+  name: String (required),
+  email: String (required, unique),
+  password: String (required, hashed),
+  createdAt: Date,
+  updatedAt: Date
+}
 ```
 
-**For Windows:**
-Download and install from [MongoDB Official Website](https://www.mongodb.com/try/download/community)
-
-**For Linux (Ubuntu):**
-```bash
-sudo apt-get install -y mongodb-org
-sudo systemctl start mongod
+### Note Model
+```javascript
+{
+  title: String (required),
+  content: String (required),
+  category: String (optional),
+  userId: ObjectId (required, ref: User),
+  createdAt: Date,
+  updatedAt: Date
+}
 ```
-
-### 2. Backend Setup
-
-1. Navigate to the backend directory:
-```bash
-cd backend
-```
-
-2. Install dependencies:
-```bash
-npm install
-```
-
-3. Create a `.env` file in the backend directory:
-```bash
-cp .env.example .env
-```
-
-4. Edit the `.env` file with your MongoDB connection string:
-```env
-MONGODB_URI=mongodb://localhost:27017/notes-app
-JWT_SECRET=your-super-secret-jwt-key-change-this-in-production
-PORT=3001
-```
-
-**IMPORTANT**: Replace `your-super-secret-jwt-key-change-this-in-production` with a strong, random secret key.
-
-5. Start the backend server:
-```bash
-npm run start:dev
-```
-
-The backend will run on `http://localhost:3001`
-
-### 3. Frontend Setup
-
-1. Navigate to the project root directory:
-```bash
-cd ..
-```
-
-2. Install dependencies:
-```bash
-npm install
-```
-
-3. Start the frontend development server:
-```bash
-npm run dev
-```
-
-The frontend will run on `http://localhost:5173`
 
 ## API Endpoints
 
 ### Authentication
-- `POST /auth/register` - Register a new user
-- `POST /auth/login` - Login user
-- `GET /auth/me` - Get current user (requires authentication)
+- `POST /api/register` - Register new user
+- `POST /api/auth/signin` - Login
+- `POST /api/auth/signout` - Logout
 
 ### Notes
-- `GET /notes` - Get all notes for the authenticated user
-- `GET /notes/:id` - Get a specific note
-- `POST /notes` - Create a new note
-- `PATCH /notes/:id` - Update a note
-- `DELETE /notes/:id` - Delete a note
-
-### Categories
-- `GET /categories` - Get all categories for the authenticated user
-- `GET /categories/:id` - Get a specific category
-- `POST /categories` - Create a new category
-- `PATCH /categories/:id` - Update a category
-- `DELETE /categories/:id` - Delete a category
+- `GET /api/notes` - Get all notes for logged-in user
+- `POST /api/notes` - Create new note
+- `PUT /api/notes` - Update existing note
+- `DELETE /api/notes` - Delete note
 
 ## Usage
 
-### Register a New Account
-1. Open `http://localhost:5173` in your browser
-2. Click "Sign Up"
-3. Enter your name, email, and password (minimum 6 characters)
-4. Click "Sign Up" to create your account
+1. **Register**: Create a new account on the register page
+2. **Login**: Sign in with your credentials
+3. **Create Note**: Click "New Note" button
+4. **Edit Note**: Click the edit icon on any note
+5. **Delete Note**: Click the trash icon on any note
+6. **Filter by Category**: Use category badges to filter notes
 
-### Login
-1. Enter your email and password
-2. Click "Sign In"
+## Default Categories
 
-### Create a Category
-1. In the sidebar, click the "+" icon next to "Categories"
-2. Enter a category name and choose a color
-3. Click "Create"
+The app comes with default categories:
+- Personal
+- Work
+- Ideas
+- Todo
+- Important
 
-### Create a Note
-1. Click the "New Note" button
-2. Enter a title and content
-3. Optionally select a category
-4. Click "Create Note"
+You can also create custom categories when creating/editing notes.
 
-### Edit a Note
-1. Click the edit icon on any note card
-2. Modify the title, content, or category
-3. Click "Update Note"
+## Security Features
 
-### Delete a Note
-1. Click the trash icon on any note card
-2. Confirm deletion
+- Password hashing with bcryptjs
+- JWT-based session management
+- Protected API routes
+- User-specific data isolation
 
-### Filter Notes by Category
-1. Click on a category in the sidebar to filter notes
+## Troubleshooting
 
-### Search Notes
-1. Use the search bar to find notes by title or content
+### MongoDB Connection Issues
 
-## Development
+If you see connection errors:
 
-### Backend Development
+1. **Check MongoDB is running**:
 ```bash
-cd backend
-npm run start:dev
-```
-
-### Frontend Development
-```bash
-npm run dev
-```
-
-### Build for Production
-
-**Backend:**
-```bash
-cd backend
-npm run build
-npm run start:prod
-```
-
-**Frontend:**
-```bash
-npm run build
-npm run preview
-```
-
-## MongoDB Connection Troubleshooting
-
-If you can't connect to MongoDB:
-
-1. **Check if MongoDB is running:**
-```bash
-# macOS
-brew services list
+# Mac
+brew services list | grep mongodb
 
 # Linux
 sudo systemctl status mongod
 
-# Windows
-# Check Services app for MongoDB service
+# Windows - Check Services app
 ```
 
-2. **Verify connection string:**
-- Make sure `MONGODB_URI` in `.env` matches your MongoDB setup
-- Default: `mongodb://localhost:27017/notes-app`
+2. **Verify connection string**: Make sure `MONGODB_URI` in `.env.local` is correct
 
-3. **Test MongoDB connection:**
-```bash
-# Using mongosh (MongoDB Shell)
-mongosh
+3. **Check firewall**: Ensure MongoDB port (27017) is accessible
 
-# Or using mongo (older versions)
-mongo
-```
+### NextAuth Issues
 
-4. **Common connection strings:**
-- Local: `mongodb://localhost:27017/notes-app`
-- Docker: `mongodb://host.docker.internal:27017/notes-app`
-- MongoDB Atlas: `mongodb+srv://<username>:<password>@cluster.mongodb.net/notes-app`
+If authentication doesn't work:
 
-## Security Notes
+1. Verify `NEXTAUTH_SECRET` is set in `.env.local`
+2. Clear browser cookies and try again
+3. Check that `NEXTAUTH_URL` matches your actual URL
 
-- Passwords are hashed using bcrypt before storage
-- JWT tokens are used for authentication
-- All note and category endpoints require authentication
-- Users can only access their own notes and categories
+## Customization
+
+### Adding New Categories
+
+Edit the `CATEGORIES` array in `components/notes/NoteModal.tsx`
+
+### Changing Theme Colors
+
+Update Tailwind classes in components or modify `tailwind.config.ts`
+
+### Adding More Fields
+
+1. Update the Note model in `lib/models/Note.ts`
+2. Update the TypeScript interface in `types/note.ts`
+3. Update the UI components to handle new fields
+
+## Deployment
+
+### Vercel (Recommended)
+
+1. Push code to GitHub
+2. Import project in Vercel
+3. Add environment variables
+4. Deploy
+
+### Other Platforms
+
+Make sure to:
+- Set all environment variables
+- Use MongoDB Atlas for database
+- Set `NEXTAUTH_URL` to your production domain
+
+## License
+
+MIT
+
+## Support
+
+For issues and questions, please open an issue on GitHub or contact the developer.
 
 ## Future Enhancements
 
 - Rich text editor for note content
 - Note sharing between users
-- Export notes to PDF/Markdown
-- Dark mode
-- Mobile app version
 - File attachments
-- Note tags in addition to categories
-- Collaboration features
+- Search functionality
+- Tags system
+- Dark mode toggle
+- Export notes as PDF/Markdown
+- Trash/Archive feature
+- Note templates
